@@ -2,7 +2,7 @@ import subprocess
 import os.path as osp
 import argparse
 from utils import *
-from grading import FULL_SPEEDUP, WEIGHTS, case_rate, perf_rate
+from grading import WEIGHTS, perf_rate
 
 
 def get_line_num(file) -> int:
@@ -15,22 +15,19 @@ def output_results(results: list, baseline: tuple):
     weighted_speedup = sum(
         speedup * w for (_, _, _, _, speedup), w in zip(results2, WEIGHTS)
     )
-    table = [
+    results2.insert(
+        0,
         [
             "case",
             "miss_cache",
             "miss_reg",
             "latency",
             "speedup",
-            "score",
         ],
-    ]
-    for i, row in enumerate(results2):
-        score = "-" if FULL_SPEEDUP[i] is None else f"{100 * case_rate(i, row[4]):.1f}%"
-        table.append([*row, score])
-    print(format_table(table))
+    )
+    print(format_table(results2))
     print(f"Weighted Speedup: {weighted_speedup:.4f}")
-    perf = perf_rate([row[4] for row in results2])
+    perf = perf_rate([speedup for (_, _, _, _, speedup) in results])
     print(f"Part B performance score: {100 * perf:.2f} / 100")
     # return tuple([item for tup in results for item in tup[1:]] + [weighted_speedup])
     o_results = []
