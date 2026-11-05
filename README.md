@@ -445,7 +445,7 @@ void example_now(ptr_reg mem){
 
 - case1: $16 \times 16 \times 16$ 矩阵乘法
 - case2: $32 \times 32 \times 32$ 矩阵乘法
-- case3: $29 \times 35 \times 29$ 矩阵乘法
+- case3: $27 \times 41 \times 27$ 矩阵乘法
 
 本题 $m \times n \times p$ 表示 $A, B, C$ 矩阵的形状分别为 $m \times n, n \times p, m \times p$，他们满足 $C = AB$
 
