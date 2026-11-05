@@ -2,6 +2,7 @@ import subprocess
 import os.path as osp
 import argparse
 from utils import *
+from grading import FULL_SPEEDUP, WEIGHTS, case_rate, perf_rate
 
 
 def get_line_num(file) -> int:
@@ -11,22 +12,26 @@ def get_line_num(file) -> int:
 
 def output_results(results: list, baseline: tuple):
     results2 = results.copy()
-    weight = [0, 0.3, 0.3, 0.4]
     weighted_speedup = sum(
-        speedup * w for (_, _, _, _, speedup), w in zip(results2, weight)
+        speedup * w for (_, _, _, _, speedup), w in zip(results2, WEIGHTS)
     )
-    results2.insert(
-        0,
+    table = [
         [
             "case",
             "miss_cache",
             "miss_reg",
             "latency",
             "speedup",
+            "score",
         ],
-    )
-    print(format_table(results2))
+    ]
+    for i, row in enumerate(results2):
+        score = "-" if FULL_SPEEDUP[i] is None else f"{100 * case_rate(i, row[4]):.1f}%"
+        table.append([*row, score])
+    print(format_table(table))
     print(f"Weighted Speedup: {weighted_speedup:.4f}")
+    perf = perf_rate([row[4] for row in results2])
+    print(f"Part B performance score: {100 * perf:.2f} / 100")
     # return tuple([item for tup in results for item in tup[1:]] + [weighted_speedup])
     o_results = []
     for tup, b in zip(results, baseline):
@@ -101,7 +106,7 @@ def test_gemm(ignore_submit=False, no_linux=False, baseline_only=False, force=Fa
 
     if not ignore_submit:
         # Upload
-        print("Leaderboard Submitting...")
+        print("Submitting to the online judge...")
         current_time = datetime.datetime.now()
         last_time = read_time(".last_submit_time")
         seconds = 30
