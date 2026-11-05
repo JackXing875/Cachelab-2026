@@ -1,11 +1,12 @@
 # This file is provided for the automation tool.
 from gemm_test import test_gemm as _test_gemm
+from grading import perf_rate, speedups_from_results
 
 
 def test_csim2():
     with open(".autograder_result", "w") as f:
         f.write(str(0))
-    
+
     result = _test_gemm(ignore_submit=True)
     # miss_cache, miss_reg, latency, baseline
 
@@ -18,13 +19,8 @@ def test_csim2():
     latency_case3, baseline_case3 = result[10], result[11]
     # assert latency_case3 < baseline_case3, "You should optimize case3"
 
-    score = 0
-    weighted_speedup = result[-1]
-
-    if weighted_speedup <= 1:
-        score = 0
-    else:
-        score = (weighted_speedup - 1) * 100
+    # Part B 性能得分（满分 100），规则见 test/grading.py
+    score = round(100 * perf_rate(speedups_from_results(result)), 2)
 
     with open(".autograder_result", "w") as f:
         f.write(str(score))
