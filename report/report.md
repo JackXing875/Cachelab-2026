@@ -4,7 +4,7 @@
 
 学号：2025200000
 
-| csim 分数（/100） | case1 speedup | case2 speedup | case3 speedup | weighted speedup | Part B 性能分（/40） |
+| csim 分数（/100） | case1 speedup | case2 speedup | case3 speedup | weighted speedup | Part B 性能分（/100） |
 | ---------------- | ------------- | ------------- | ------------- | ---------------- | ------------------- |
 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 |
 
@@ -13,7 +13,7 @@
 本地评测截图：
 
 <!-- 在项目根目录运行 python3 test/overall_test.py，插入本次运行的终端截图。
-请包含 Part A 的完整结果、Part B 各 case 的状态和性能数据，以及最后的分数小计；可分成多张图片。
+请包含 Part A 的完整结果、Part B 各 case 的状态和性能数据，以及各自的百分制分数；可分成多张图片。
 也可以分别运行 python3 test/csim_test.py 和 python3 test/gemm_test.py 后截图。
 报告中的数据必须对应最终提交的代码，不需要登录任何评测网站。 -->
 

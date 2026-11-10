@@ -84,11 +84,13 @@ public:
 inline int max_reg_count = 0;
 inline int current_reg_count = 0;
 
-namespace
+namespace cachelab_detail
 {
-  constexpr int reg_num = 36;
+  inline constexpr int reg_num = 36;
 
-  bool reg_map[reg_num] = {0};
+  // Constructors and destructors instantiated in different source files must
+  // allocate and release registers in the same pool.
+  inline bool reg_map[reg_num] = {0};
 
   inline int find_reg()
   {
@@ -117,7 +119,7 @@ namespace
     current_reg_count--;
   }
 
-} // namespace
+} // namespace cachelab_detail
 
 template <typename T>
 class BaseRegisterWrapper
@@ -133,30 +135,30 @@ protected:
   {
     if (state == RegisterWrapperState::ACTIVE)
     {
-      reg_id_ = find_reg();
+      reg_id_ = cachelab_detail::find_reg();
     }
   }
 
 public:
   EXPLICIT_HINT BaseRegisterWrapper(T reg = 0)
-      : reg_(reg), state_(RegisterWrapperState::ACTIVE), reg_id_(find_reg())
+      : reg_(reg), state_(RegisterWrapperState::ACTIVE), reg_id_(cachelab_detail::find_reg())
   {
   }
 
   EXPLICIT_HINT BaseRegisterWrapper(const MemoryWrapper<T> &other)
-      : reg_(*other.ptr_), state_(RegisterWrapperState::ACTIVE), reg_id_(find_reg())
+      : reg_(*other.ptr_), state_(RegisterWrapperState::ACTIVE), reg_id_(cachelab_detail::find_reg())
   {
     PtrWrapper<T>::access_logs.push_back({MemoryAccessType::READ, other.ptr_, reg_id_});
   }
 
   EXPLICIT_HINT BaseRegisterWrapper(const MemoryWrapper<T> &&other)
-      : reg_(*other.ptr_), state_(RegisterWrapperState::ACTIVE), reg_id_(find_reg())
+      : reg_(*other.ptr_), state_(RegisterWrapperState::ACTIVE), reg_id_(cachelab_detail::find_reg())
   {
     PtrWrapper<T>::access_logs.push_back({MemoryAccessType::READ, other.ptr_, reg_id_});
   }
 
   EXPLICIT_HINT BaseRegisterWrapper(const BaseRegisterWrapper<T> &other)
-      : reg_(other.reg_), state_(RegisterWrapperState::ACTIVE), reg_id_(find_reg())
+      : reg_(other.reg_), state_(RegisterWrapperState::ACTIVE), reg_id_(cachelab_detail::find_reg())
   {
   }
 
@@ -183,7 +185,7 @@ public:
   {
     if (state_ == RegisterWrapperState::ACTIVE)
     {
-      free_reg(reg_id_);
+      cachelab_detail::free_reg(reg_id_);
     }
   }
 

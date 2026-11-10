@@ -12,7 +12,7 @@
 2. Part B **取消根据排行榜名次计分**，改为按**综合加速比**线性计分，综合加速比达到 **8** 得满分；
 3. **取消独立评测网站、GitHub Classroom 和 Actions**，全部测试在本地运行，向知是平台提交两份代码和报告 PDF。
 
-学生代码模板、框架（`common.h`、`matrix.*`、`simulator.cpp`）和各个 case 的 baseline 实现保持原样。评测脚本、`Makefile`、README 和报告模板已适配本地流程。
+学生代码模板、`matrix.*`、`simulator.cpp` 和各个 case 的 baseline 实现保持原样。评测脚本、`Makefile`、README 和报告模板已适配本地流程；预发布验证另修复了 `common.h` 中寄存器分配表在不同源文件之间不共享的问题。
 
 ## 2. 改动清单
 
@@ -21,9 +21,10 @@
 | [`simulator.h`](./simulator.h) | `case3_m/n/p`：29/35/29 → 27/41/27 |
 | [`README.md`](./README.md) | case3 形状；重写 Part B 计分规则；实验须知、实现注意事项、测试与分数、总分构成里去掉与排行榜名次有关的表述 |
 | [`test/grading.py`](./test/grading.py)（新增） | 权重、零分线、满分线和得分率的计算，是计分规则的**唯一来源** |
-| [`test/gemm_test.py`](./test/gemm_test.py) | 无密钥、无上传；失败 case 计 0 后继续；输出百分制及 40 分制性能分，返回值布局保留 |
+| [`test/gemm_test.py`](./test/gemm_test.py) | 无密钥、无上传；失败 case 计 0 后继续；输出百分制性能分，返回值布局保留 |
 | [`test/csim_test.py`](./test/csim_test.py)、[`test/overall_test.py`](./test/overall_test.py) | 各部分独立编译；本地汇总并保存结果；区分学生错误与评测故障 |
 | [`Makefile`](./Makefile) | Part B 固定使用提供的 `csim-ref`；补全合法性检查依赖；删除不存在的参考源码构建规则 |
+| [`common.h`](./common.h) | 寄存器池改为具名命名空间中的 inline 变量，让不同源文件中的构造和析构访问同一份状态；上限仍为 36 |
 | [`report/report.md`](./report/report.md)、[`report/README.md`](./report/README.md) | 改用本地评测截图；知是平台仅提交报告 PDF |
 | [`test/test_local_grading.py`](./test/test_local_grading.py)（新增） | 隔离目录中的评测回归测试，不包含优化解法 |
 | 已删除的旧入口 | `submit_gemm.sh`、两个 `*_test2.py`、`.github/workflows/autograding.yml` |
@@ -114,7 +115,11 @@ bash test/test.sh
 unshare --user --map-root-user --net python3 -m unittest discover -s test -p 'test_local_grading.py' -v
 ```
 
-本次验证记录（2026-11-10）：Ubuntu 24.04 x86-64、Python 3.12.3、gcc/g++ 13.3.0；上述断网回归测试 15 项全部通过，`bash test/test.sh` 的四份合法性示例全部通过。四个 baseline 的数据与第 5 节一致，case3 形状、学生代码模板、模拟框架和参考程序相对迁移前没有改动。
+本地化阶段验证记录（2026-11-10，`62d3185`）：Ubuntu 24.04 x86-64、Python 3.12.3、gcc/g++ 13.3.0；上述断网回归测试 15 项全部通过，`bash test/test.sh` 的四份合法性示例全部通过。四个 baseline 的数据与第 5 节一致。
+
+预发布验证补充：合法的 `reg tmpa; tmpa = A[...]` 写法曾使 baseline 报寄存器耗尽。原来的匿名命名空间让每个源文件各有一份 `reg_map`，不同模板构造函数与析构函数可能访问不同的表。已改为共享寄存器池，并新增最小复现回归；该测试在修复前失败、修复后通过。此修复不改变矩阵形状、内存访问计价或 36 个寄存器的限制。
+
+预发布版 `v2026.0.0-rc.1` 的断网回归检查共 16 项，全部通过，四份原有合法性示例也全部通过。另在仓库外独立完成了 Part A 和 Part B：Part A 20/20 通过，100 分；Part B 综合加速比 8.0131，100 分。首次完成 Part A 约 47 秒，Part B 约 5 分 27 秒（包括框架问题排查、修复和分块参数试验）；这是本次助手实测用时，不作为学生完成时间估计。参考解和试验工具未加入仓库，学生代码模板保持原样。
 
 ## 7. 怎么复测提交
 
@@ -147,5 +152,5 @@ unshare --user --map-root-user --net python3 -m unittest discover -s test -p 'te
 
 ## 10. 不在本仓库里的东西
 
-- **参考解和用来评估形状、阈值的工具**：没有保留在本仓库，以免公开解法。第 5 节的优化数据沿用先前内部记录，本次本地化验证只复核了 baseline，不将这些历史优化数据视为本次重测结果。
+- **参考解和用来评估形状、阈值的工具**：没有保留在本仓库，以免公开解法。第 5 节的优化数据沿用先前内部记录；本次预发布独立实现的验证结果见第 6 节，不将历史优化数据视为本次重测结果。
 - `csim-ref` 只提供 Linux x86-64 二进制，没有源码；无需联网获取，也不要改用学生的 `csim` 为 Part B 打分。

@@ -53,7 +53,7 @@ class GradingTests(unittest.TestCase):
         self.assertEqual(speedups_from_results(results), [10, 0, 10, 10])
         self.assertEqual(results[-1], 7)
         self.assertIn("Part B performance score: 85.71 / 100", output.getvalue())
-        self.assertIn("Part B performance contribution: 34.29 / 40", output.getvalue())
+        self.assertNotIn("Part B performance contribution:", output.getvalue())
 
     def test_timeout_kills_children_holding_output_pipe(self):
         # Killing only the parent would leave communicate() waiting for the child.
@@ -117,7 +117,12 @@ class LocalEvaluationTests(unittest.TestCase):
         self.assertEqual(part_a, [0, 0])
         expected = [value for row in BASELINES for value in (*row, row[-1])] + [1]
         self.assertEqual(part_b, expected)
-        self.assertIn("Automatic subtotal: 0.00 / 80", output)
+        self.assertTrue(output.rstrip().endswith("Part B performance score: 0.00 / 100"))
+        for removed in (
+            "Part B performance contribution:", "Part A:", "Part B performance:",
+            "Automatic subtotal:", "Report/style points", "Raw results saved",
+        ):
+            self.assertNotIn(removed, output)
         for filename in (".access_key", ".last_submit_time", ".autograder_result"):
             self.assertFalse((self.work / filename).exists())
 
@@ -137,6 +142,22 @@ class LocalEvaluationTests(unittest.TestCase):
         output = self.evaluate("gemm_test.py")
         self.assertIn("Weighted Speedup: 1.0000", output)
         self.assertFalse((self.work / "csim").exists())
+
+    def test_memory_assignment_shares_register_pool_with_baseline(self):
+        # Assignment-only student code must not change which register pool the
+        # baseline's memory constructors allocate from in another source file.
+        path = self.work / "gemm.cpp"
+        source = path.read_text()
+        source = source.replace(
+            "reg tmpa = A[i * n + k];", "reg tmpa; tmpa = A[i * n + k];"
+        ).replace(
+            "reg tmpb = B[k * p + j];", "reg tmpb; tmpb = B[k * p + j];"
+        )
+        path.write_text(source)
+        self.evaluate("overall_test.py")
+        _, results = self.raw_results()
+        expected = [value for row in BASELINES for value in (*row, row[-1])] + [1]
+        self.assertEqual(results, expected)
 
     def test_part_a_ignores_broken_part_b(self):
         (self.work / "gemm.cpp").write_text("#error Part B is unfinished\n")

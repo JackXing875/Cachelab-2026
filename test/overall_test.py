@@ -1,4 +1,4 @@
-"""Run both parts locally and report the automatically measured subtotal."""
+"""Run the Part A and Part B evaluations locally."""
 
 import argparse
 from pathlib import Path
@@ -6,7 +6,6 @@ import sys
 
 from csim_test import test_csim
 from gemm_test import test_gemm
-from grading import perf_rate, speedups_from_results
 from utils import EvaluationError
 
 
@@ -25,13 +24,6 @@ def main():
         " ".join(map(str, results_csim)) + "\n"
         + " ".join(map(str, results_gemm)) + "\n"
     )
-    part_a = 40 * results_csim[1] / 100
-    part_b = 40 * perf_rate(speedups_from_results(results_gemm))
-    print(f"Part A: {part_a:.2f} / 40")
-    print(f"Part B performance: {part_b:.2f} / 40")
-    print(f"Automatic subtotal: {part_a + part_b:.2f} / 80")
-    print("Report/style points and any Part B report credit are assessed by the TAs.")
-    print(f"Raw results saved to {results_file}")
     return 0
 
 

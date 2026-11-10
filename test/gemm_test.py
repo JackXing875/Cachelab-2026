@@ -27,7 +27,6 @@ def output_results(results: list, baselines: list):
     print(format_table(table))
     print(f"Weighted Speedup: {weighted:.4f}")
     print(f"Part B performance score: {100 * rate:.2f} / 100")
-    print(f"Part B performance contribution: {40 * rate:.2f} / 40")
 
     # Keep the existing numeric layout for .overall_results consumers.
     # A failed case has -1 for its three unavailable measurements.

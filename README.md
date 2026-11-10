@@ -100,7 +100,7 @@ python3 test/gemm_test.py       # Part B：正确性、性能与性能分
 python3 test/overall_test.py    # 两部分一起评测，并保存 .overall_results
 ```
 
-脚本会自动编译相应部分。Part A 和 Part B 可以分别测试，互不依赖对方的实现。综合测试输出 Part A（满分 40）与 Part B 性能分（满分 40）的小计；报告、代码风格及 Part B 的报告补分由助教评阅，不包含在自动小计中。
+脚本会自动编译相应部分。Part A 和 Part B 可以分别测试，互不依赖对方的实现。综合测试依次输出这两份报告：Part A 的正确性分数和 Part B 的性能分数均为百分制。报告、代码风格及 Part B 的报告补分由助教评阅。
 
 ## 问题简述
 
@@ -528,7 +528,7 @@ python3 test/gemm_test.py --baseline
 
 $$s = \min\left(1,\ \max\left(0,\ \frac{W - 1}{W_{\mathrm{full}} - 1}\right)\right),\quad W_{\mathrm{full}} = 8$$
 
-也就是说：综合加速比为 1（与 baseline 持平或更差）得 0 分，达到 **8** 得满分，两者之间按综合加速比线性给分，超过 8 不再加分。例如综合加速比为 4.5，得分率为 50%。Part B 的性能分 $= 40 \times s$。运行 `python3 test/gemm_test.py` 时，性能报告会同时给出综合加速比、百分制性能得分（`Part B performance score`，满分 100）及折算后的 Part B 性能分（`Part B performance contribution`，满分 40）。
+也就是说：综合加速比为 1（与 baseline 持平或更差）得 0 分，达到 **8** 得满分，两者之间按综合加速比线性给分，超过 8 不再加分。例如综合加速比为 4.5，得分率为 50%。Part B 的性能分 $= 40 \times s$。运行 `python3 test/gemm_test.py` 时，性能报告会给出综合加速比和百分制性能得分（`Part B performance score`，满分 100）。
 
 因为是按综合加速比计算，各个 case 之间可以互相弥补：某个 case 优化得很好、另一个 case 不够理想，仍然可以拿到满分。如果某个 case 的结果不正确，或者违反了上面的实现要求，该 case 的加速比按 0 计。
 
