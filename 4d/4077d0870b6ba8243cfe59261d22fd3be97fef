@@ -1,0 +1,35 @@
+test/README.md
+  s_4cd8b9a057af58::t_72463398f6f03d 23
+test/test_local_grading.py
+  s_4cd8b9a057af58::t_1ffa787174f36f 146-161
+  s_4cd8b9a057af58::t_72463398f6f03d 56,120-125
+HANDOFF.md
+  s_4cd8b9a057af58::t_cdf8a3c309332c 122,155
+  s_4cd8b9a057af58::t_0c458c1e448e44 15,27,118-120
+  s_4cd8b9a057af58::t_72463398f6f03d 24
+  s_4cd8b9a057af58::t_f3b79966a07c8c 121
+common.h
+  s_4cd8b9a057af58::t_eb5beefaae0f19 87,89,91-93,122,138,144,149,155,161,188,943
+README.md
+  s_4cd8b9a057af58::t_72463398f6f03d 103,531
+report/report.md
+  s_4cd8b9a057af58::t_72463398f6f03d 7,16
+test/overall_test.py
+  s_4cd8b9a057af58::t_72463398f6f03d 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4d4077d0870b6ba8243cfe59261d22fd3be97fef",
+  "prompts": {},
+  "sessions": {
+    "s_4cd8b9a057af58": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1c33d-7094-72d1-99a1-8d861e8eb696",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Schrieffer <xjack875@gmail.com>"
+    }
+  }
+}
