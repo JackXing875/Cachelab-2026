@@ -1,99 +1,70 @@
-import subprocess
+"""Local reference comparison for Part A."""
+
 import argparse
-from utils import *
+from pathlib import Path
+import sys
+
+from utils import (
+    EvaluationError,
+    check_environment,
+    format_table,
+    read_results_file,
+    run_command,
+)
 
 
 def output_results(results: list):
-    results2 = results.copy()
-    total_ok = sum(1 for status, *_ in results2 if status == "OK ")
-    score = 100 * (total_ok / len(results2))
-    results2.insert(
-        0,
-        [
-            "status",
-            "trace_file",
-            "(s, E, b)",
-            "ref: (hits, misses, evictions)",
-            "handin: (hits, misses, evictions)",
-        ],
-    )
-    print(format_table(results2))
+    total_ok = sum(1 for status, *_ in results if status == "OK")
+    score = 100 * total_ok / len(results)
+    table = [[
+        "status", "trace_file", "(s, E, b)",
+        "ref: (hits, misses, evictions)", "handin: (hits, misses, evictions)",
+    ]] + results
+    print(format_table(table))
     print(f"Score: {score:.2f}")
     return total_ok, score
 
 
-def test_csim(ignore_ref=False):
-    ref_executable = "csim-ref"
-    ref_executable2 = "csim-ref2"
-    handin_executable = "csim"
+def run_csim(executable, s, E, b, trace_file):
+    Path(".csim_results").unlink(missing_ok=True)
+    run_command([
+        f"./{executable}", "-s", str(s), "-E", str(E), "-b", str(b), "-t", trace_file,
+    ])
+    return read_results_file()
+
+
+def test_csim():
+    check_environment()
+    # Part A can be evaluated even if gemm.cpp does not compile yet.
+    run_command(["make", "-j", "csim"], timeout=120)
     trace_files = [
-        "traces/yi2.trace",
-        "traces/yi.trace",
-        "traces/dave.trace",
-        "traces/trans.trace",
-        "traces/long.trace",
+        "traces/yi2.trace", "traces/yi.trace", "traces/dave.trace",
+        "traces/trans.trace", "traces/long.trace",
     ]
-    results_file = ".csim_results"
     results = []
-    try:
-        subprocess.run(
-            ["make", "-j"],
-            check=True,
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            # capture_output=True,
-        )
-    except subprocess.CalledProcessError as e:
-        print(e.stdout.decode())
-        exit(1)
     for s, E, b in [(5, 1, 5), (2, 4, 3), (4, 2, 4), (1, 1, 1)]:
         for trace_file in trace_files:
-            if not ignore_ref:
-                subprocess.call(["rm", "-f", results_file])
-                subprocess.run(
-                    f"./{ref_executable} -s {s} -E {E} -b {b} -t {trace_file}",
-                    check=True,
-                    shell=True,
-                    capture_output=True,
-                )
-                ref_results = parse_results_file(open(results_file, "r").read())
-            else:
-                ref_results = "Unknown"
-            if False:  # debug only
-                subprocess.call(["rm", "-f", results_file])
-                subprocess.run(
-                    f"./{ref_executable2} -s {s} -E {E} -b {b} -t {trace_file}.old",
-                    shell=True,
-                    capture_output=True,
-                )
-                ref2_results = parse_results_file(open(results_file, "r").read())
-                assert (
-                    ref_results == ref2_results
-                ), f"Unexpected results for {trace_file}"
-            subprocess.call(["rm", "-f", results_file])
-            subprocess.run(
-                f"./{handin_executable} -s {s} -E {E} -b {b} -t {trace_file}",
-                check=True,
-                shell=True,
-                capture_output=True,
-            )
-            handin_results = parse_results_file(open(results_file, "r").read())
-            status = "OK " if ref_results == handin_results else "ERROR"
+            # Reference failures are fatal, not student wrong answers.
+            ref_results = run_csim("csim-ref", s, E, b, trace_file)
+            try:
+                handin_results = run_csim("csim", s, E, b, trace_file)
+            except EvaluationError as error:
+                print(f"{trace_file} ({s}, {E}, {b}): ERROR\n{error}")
+                handin_results = "ERROR"
+            status = "OK" if ref_results == handin_results else "ERROR"
             results.append((status, trace_file, (s, E, b), ref_results, handin_results))
     return output_results(results)
-    # return results
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--no_linux",
-        action="store_true",
-    )
-    args = parser.parse_args()
-    test_csim(ignore_ref=args.no_linux)
+    argparse.ArgumentParser(description=__doc__).parse_args()
+    try:
+        test_csim()
+    except EvaluationError as error:
+        print(f"Evaluation failed: {error}", file=sys.stderr)
+        return 1
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

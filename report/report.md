@@ -4,19 +4,20 @@
 
 学号：2025200000
 
-| csim 分数 | case1 speedup | case2 speedup | case3 speedup | weighted speedup |
-| --------- | ------------- | ------------- | ------------- | ----------------- |
-| 0.00         | 0.00             | 0.00             | 0.00             | 0.00                 |
+| csim 分数（/100） | case1 speedup | case2 speedup | case3 speedup | weighted speedup | Part B 性能分（/40） |
+| ---------------- | ------------- | ------------- | ------------- | ---------------- | ------------------- |
+| 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 |
 
 <!-- 保留两位小数，四舍五入 -->
 
-Autograder 截图：
+本地评测截图：
 
-![](./img/autograding-result.png)
+<!-- 在项目根目录运行 python3 test/overall_test.py，插入本次运行的终端截图。
+请包含 Part A 的完整结果、Part B 各 case 的状态和性能数据，以及最后的分数小计；可分成多张图片。
+也可以分别运行 python3 test/csim_test.py 和 python3 test/gemm_test.py 后截图。
+报告中的数据必须对应最终提交的代码，不需要登录任何评测网站。 -->
 
-<!-- 请同时将 Github Action 中的 csim test 和 gemm test 展开截图，并保证左上角出现你的仓库名，你可能需要调整浏览器缩放 -->
-
-<!-- 如果 Github Action 不可用，本地的两个 test 的运行截图也可以-->
+<!-- 最终在知是平台提交 csim.c（或 csim.cpp）、gemm.cpp 和本报告的 PDF，共三个文件。 -->
 
 ## Part A: cache 模拟器
 
@@ -90,7 +91,8 @@ Autograder 截图：
 ![可以插入图片来描述](./img/example.jpeg)
 
 <!-- 如果你有除了 gemm_test.py 脚本算出来的 cache miss 和 register miss 的其他数据展示，比如你跑了个参数的网格搜索，
-请保证这些数据是可复现的，给出复现的代码，和复现代码的执行方法文档。这些应该包含在提交仓库中
+请保证这些数据是可复现的，在报告中给出必要的复现代码片段和执行方法。
+如果附加材料过长，请先与助教确认提供方式；知是平台仍按三个文件提交
 -->
 
 ### case2

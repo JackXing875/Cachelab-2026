@@ -2,16 +2,17 @@
 
 写给接手本仓库的助教。读完这份文档（约 5 分钟），你应该知道：2026 版相对 2025 版改了什么、为什么这样改、怎么验证、还剩什么没做。
 
-最后更新：2026-11-06。待办事项的实时状态以 [issue #3](https://github.com/JackXing875/Cachelab-2026/issues/3) 为准。
+最后更新：2026-11-10。本文已按完全本地评测和知是平台提交的决定更新；旧 issue 中涉及网站或 Classroom 的待办不再适用。
 
 ## 1. 一句话概述
 
-2026 版在 2025 版的基础上只做了两件事：
+2026 版在 2025 版的基础上做了三项改动：
 
 1. Part B 的 **case3 换成 27×41×27**（原来是 29×35×29）；
-2. Part B **取消根据排行榜名次计分**，改为按**综合加速比**线性计分，综合加速比达到 **8** 得满分。
+2. Part B **取消根据排行榜名次计分**，改为按**综合加速比**线性计分，综合加速比达到 **8** 得满分；
+3. **取消独立评测网站、GitHub Classroom 和 Actions**，全部测试在本地运行，向知是平台提交两份代码和报告 PDF。
 
-Part A、框架（`common.h`、`matrix.*`、`simulator.cpp`）、各个 case 的 baseline 实现、`Makefile`、报告模板都没有改。
+学生代码模板、框架（`common.h`、`matrix.*`、`simulator.cpp`）和各个 case 的 baseline 实现保持原样。评测脚本、`Makefile`、README 和报告模板已适配本地流程。
 
 ## 2. 改动清单
 
@@ -20,12 +21,16 @@ Part A、框架（`common.h`、`matrix.*`、`simulator.cpp`）、各个 case 的
 | [`simulator.h`](./simulator.h) | `case3_m/n/p`：29/35/29 → 27/41/27 |
 | [`README.md`](./README.md) | case3 形状；重写 Part B 计分规则；实验须知、实现注意事项、测试与分数、总分构成里去掉与排行榜名次有关的表述 |
 | [`test/grading.py`](./test/grading.py)（新增） | 权重、零分线、满分线和得分率的计算，是计分规则的**唯一来源** |
-| [`test/gemm_test.py`](./test/gemm_test.py) | 报告末尾新增 `Part B performance score`；`test_gemm()` 的返回值布局不变 |
-| [`test/gemm_test2.py`](./test/gemm_test2.py) | `.autograder_result` 改为 Part B 性能得分（0–100）；原来是 `(综合加速比 - 1) * 100`，没有上限 |
+| [`test/gemm_test.py`](./test/gemm_test.py) | 无密钥、无上传；失败 case 计 0 后继续；输出百分制及 40 分制性能分，返回值布局保留 |
+| [`test/csim_test.py`](./test/csim_test.py)、[`test/overall_test.py`](./test/overall_test.py) | 各部分独立编译；本地汇总并保存结果；区分学生错误与评测故障 |
+| [`Makefile`](./Makefile) | Part B 固定使用提供的 `csim-ref`；补全合法性检查依赖；删除不存在的参考源码构建规则 |
+| [`report/report.md`](./report/report.md)、[`report/README.md`](./report/README.md) | 改用本地评测截图；知是平台仅提交报告 PDF |
+| [`test/test_local_grading.py`](./test/test_local_grading.py)（新增） | 隔离目录中的评测回归测试，不包含优化解法 |
+| 已删除的旧入口 | `submit_gemm.sh`、两个 `*_test2.py`、`.github/workflows/autograding.yml` |
 
 对应的 PR 和 issue：[#4](https://github.com/JackXing875/Cachelab-2026/pull/4)（case3 形状，关闭 #1）、[#5](https://github.com/JackXing875/Cachelab-2026/pull/5)（计分规则，关闭 #2）。两个 PR 都是 squash 合并，主线上是 `8af64b5` 和 `a35f5bc`；PR 页面里保留了讨论过程中被替换掉的中间方案。
 
-在线评测网站（`submit_gemm.sh` 上传到的 `cachelab.rucics.tech`）**保留**，仅用于提交和展示分数，不再参与排名计分。
+2026-11-10 已确认：网站端没有需要额外迁移的隐藏测试或检查，按仓库现有检查迁移。测试无需网络、账号、密钥或外部服务；GitHub 仅用于维护模板和问题反馈。
 
 ## 3. 计分规则
 
@@ -39,7 +44,7 @@ Part B 性能分 = 40 × s
 - W = 1（与 baseline 持平或更差）得 0 分，W = 8 得满分，其间线性插值，超过 8 不再加分；
 - **不对单个 case 设满分线**，各个 case 之间可以互相弥补（例如 case1 优化到极致、case3 一般，也可以拿满分）；
 - 报告里的技术性深度思考可以在性能分不足时酌情补分，Part B 总分不超过 40；
-- 结果不正确的 case，README 写的是“加速比按 0 计”。
+- 结果不正确、寄存器超限或运行超时的 case，加速比按 0 计，继续评测其余 case；编译、基本合法性检查或 baseline 失败则整个评测报错，不产生正常成绩。
 
 数字写在三个地方，**改的时候要同步**：
 
@@ -90,53 +95,57 @@ Part B 性能分 = 40 × s
 
 ## 6. 怎么验证
 
+在项目根目录运行（Ubuntu 24.04 x86-64，Python 3、gcc/g++、make）：
+
 ```bash
-make -j
-python3 test/gemm_test.py --ignore_submit   # 本地报告，不上传
-python3 test/gemm_test2.py && cat .autograder_result   # autograding 入口，输出 0–100
-bash test/test.sh                           # gemm.cpp 合法性检查的自测，退出码 0 为通过
-make clean
+python3 test/csim_test.py
+python3 test/gemm_test.py
+python3 test/gemm_test.py --baseline
+python3 test/overall_test.py
+python3 -m unittest discover -s test -p 'test_local_grading.py' -v
+bash test/test.sh
 ```
 
-对仓库里未优化的 `gemm.cpp`，预期是：各个 case 加速比为 1.0，`Part B performance score: 0.00 / 100`，baseline 数值与上表一致。需要仓库里的 `csim-ref`（已提交的二进制）。
+对仓库里未优化的 `gemm.cpp`，各 case 加速比应为 1.0，`Part B performance score: 0.00 / 100`，baseline 数值与上表一致。`csim.c` 是桩代码，Part A 为 0 分；这不影响 Part B 的独立测试。
 
-## 7. 常见修改怎么做
+回归测试在临时目录复制模板，覆盖评分边界、失败 case 继续评测、编译/合法性失败、参考程序缺失、超时清理、结果文件残留和两部分独立编译。不会修改工作目录中的学生代码，也不需要下载依赖。支持用户命名空间的 Linux 环境可用以下命令在无外部网络的命名空间中运行整个回归测试：
+
+```bash
+unshare --user --map-root-user --net python3 -m unittest discover -s test -p 'test_local_grading.py' -v
+```
+
+本次验证记录（2026-11-10）：Ubuntu 24.04 x86-64、Python 3.12.3、gcc/g++ 13.3.0；上述断网回归测试 15 项全部通过，`bash test/test.sh` 的四份合法性示例全部通过。四个 baseline 的数据与第 5 节一致，case3 形状、学生代码模板、模拟框架和参考程序相对迁移前没有改动。
+
+## 7. 怎么复测提交
+
+学生向[知是平台](https://okcheese.com)提交三个文件：`csim.c` 或 `csim.cpp` 二选一、`gemm.cpp`、报告 PDF。不要求报告源文件、GitHub 提交或在线截图。
+
+每位学生使用一份新的、未修改的模板副本，只放入该学生的两份源代码，然后运行 `python3 test/overall_test.py`。不要使用学生改过的 Makefile、框架、baseline、参考程序或测试脚本。报告中的数据必须与提交代码相符；最终成绩还包括实现要求检查、报告与代码风格评分，以及原规则允许的 Part B 报告补分。
+
+测试脚本退出码为 0 表示流程完成，不表示所有 case 正确或性能满分。请同时查看状态表和分数。编译失败或参考评测环境故障的退出码为 1，应排查原因后复测。
+
+## 8. 常见修改怎么做
 
 **换 case3 的形状**
-1. 改 `simulator.h` 的三个 `#define`，以及 `README.md` 题目描述里的一行；
-2. 跑 `make case3_baseline` 取新 baseline，同步给评测网站；
-3. **重新评估满分线**。形状变了，case3 能达到的加速比就变了，W = 8 不一定还合适。做法是写几份不同水平的参考解，用 `gemm_test.py` 算出 W，对照第 5 节的标准（满分线约为最强解的 90%）。
+1. 改 `simulator.h` 的三个 `#define`，以及 `README.md` 题目描述；
+2. 跑 `make case3_baseline` 取新 baseline，同步本文件和回归测试中的期望值；
+3. 重新评估满分线。形状变了，case3 能达到的加速比也会变。内部参考解应留在不向学生发布的位置。
 
-**调满分线或权重**：改 `test/grading.py`，再按第 3 节同步 `README.md`。
+**调满分线或权重**：改 `test/grading.py`，同步 README、本文和回归测试中的评分断言。
 
-**不要改的东西**：`gemm_test.py` 中 `test_gemm()` 的返回值布局（每个 case 依次是 `miss_cache, miss_reg, latency, baseline`，最后是综合加速比）。`overall_test.py` 把它写入 `.overall_results`，外部工具可能在读；`test/grading.py` 的 `speedups_from_results()` 也依赖这个布局。
+**结果格式**：`test_gemm()` 的返回值仍为 17 个数，每个 case 依次是 `miss_cache, miss_reg, latency, baseline`，最后是综合加速比。失败 case 的前三项为 `-1`（未取得有效测量值），baseline 仍保留，`speedups_from_results()` 将其还原为 0 加速比。`.overall_results` 第一行为 Part A 的通过数量和百分制分数，第二行为以上 17 项。综合脚本开始时会清除旧结果，仅在本次评测完成后写入新结果。
 
-## 8. 待办与待决
+**自动检查边界**：原有 fake include 检查是基本的误用提示，不是完整的 C++ 语义审计；复杂度、禁止的数据打包以及是否绕过框架等仍须人工审查。本次没有引入新的隐藏数据或检查规则。
 
-以下对应 [issue #3](https://github.com/JackXing875/Cachelab-2026/issues/3)，请以 issue 里的勾选状态为准。
+## 9. 发布前待办
 
-**需要确认的决策**
-- 满分线 8 和权重 30/30/40 是否合适；
-- 成绩以“网站上的最优提交”还是“最终 commit”为准（现在沿用旧规则：报告里的版本必须与网站上的最优提交一致，README 只是把“排行榜”改成了“网站”）；
-- Part B 的 40 分是否要给报告单独划分（现在没有，报告只能补分）。
-
-**需要同步的事项**
-- **在线评测网站**（代码不在本仓库）：使用新的 case3 形状；新 baseline 见上表；展示的分数与 `test/grading.py` 的规则一致，或明确只展示加速比；
-- README 中**与年份相关、本次未改**的内容：模板仓库和 ISSUE 的链接仍指向 `RUCICS/Cachelab-2025Fall`；“主要负责助教”仍是 2025 年的两位同学；obe 上“获取排行榜密钥”条目的名称（README 原样引用）是否更名；
-- 在 Github Classroom 上重新创建作业，确认 autograding 的两个 test 正常运行；
-- 把另一位助教加为协作者，建议给 `main` 开启“合并前需要 review”；
-- 可选：`report/report.md` 的表格增加“Part B 性能得分”一列；
-- **发布前决定是否保留本文件**：Github Classroom 会把模板仓库复制进每位学生的仓库，本文件也会一起被复制。
-
-## 9. 注意事项
-
-- Github Actions 里 `Autograding Reporter` 显示**失败是正常的**：模板里 `csim.c` 是桩代码、`gemm.cpp` 是朴素实现，得分为 0，初始提交的 `main` 上也是这样。关键是 csim test 和 gemm test 两步本身都能跑通。
-- 某个 case 抛出错误（结果不对、寄存器超限等）时，`gemm_test.py` 会整体失败，autograding 得分为 0。这是原有行为，README 里“按 0 计”只是人工评分时的口径。
-- [`test/gemm_test2.py`](./test/gemm_test2.py) 里被注释掉的几行 `assert` 下标整体错位了一个 case（`result[0:4]` 其实是 case0，case1 从 `result[4]` 开始），如果要启用需要先修正。
-- `gemm_test.py --public` 会给 `submit_gemm.sh` 传一个 `public` 参数，但脚本并不读取参数，这个选项目前没有实际作用。
-- 评测网站的地址写在 [`submit_gemm.sh`](./submit_gemm.sh) 里，用的是 http。
+- 在知是平台创建作业并设置三个文件的提交要求，确认截止时间；
+- 与另一位助教用同一模板复测一份实际作业，确认收集文件和报告评阅流程；
+- README 的负责助教和联系方式目前指向课程公告，发布时按课程安排补充；
+- 满分线 8、权重 30/30/40 及报告补分规则沿用已有决定；如需调整，按第 8 节同步；
+- 发布给学生前决定是否保留本文件：其中含内部阈值评估过程和参考性能数据。
 
 ## 10. 不在本仓库里的东西
 
-- **评测网站的代码**：不在本仓库，需要向网站的维护者确认。
-- **参考解和用来评估形状、阈值的工具**：不在本仓库，也没有保留。本仓库是公开的，并且会被复制进学生的仓库，放进来会泄露解法。第 5 节的数字是用它们得到的，需要复现时得重新写。所用模型与 `csim-ref` 完全一致（直接映射，32 组，每块 16 字节，A、B、C、buffer 在内存中依次紧密排列，`latency = 15 × miss_cache + miss_reg`），已用 baseline 和多个解法核对过。
+- **参考解和用来评估形状、阈值的工具**：没有保留在本仓库，以免公开解法。第 5 节的优化数据沿用先前内部记录，本次本地化验证只复核了 baseline，不将这些历史优化数据视为本次重测结果。
+- `csim-ref` 只提供 Linux x86-64 二进制，没有源码；无需联网获取，也不要改用学生的 `csim` 为 Part B 打分。

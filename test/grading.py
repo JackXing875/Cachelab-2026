@@ -30,6 +30,10 @@ def speedups_from_results(results: list) -> list:
     """从 gemm_test.test_gemm() 的返回值还原 case0 ~ case3 的加速比。
 
     返回值依次是 case0 ~ case3 各 4 项 (miss_cache, miss_reg, latency, baseline)，
-    最后一项是综合加速比。
+    最后一项是综合加速比。失败 case 的前三项为 -1，其加速比为 0。
     """
-    return [results[4 * i + 3] / results[4 * i + 2] for i in range(4)]
+    return [
+        results[4 * i + 3] / results[4 * i + 2]
+        if results[4 * i + 2] > 0 else 0.0
+        for i in range(4)
+    ]
